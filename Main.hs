@@ -1,7 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TemplateHaskell #-}
 
+import           Control.Applicative ((<**>))
 import           Control.Monad (unless)
+import           Data.Semigroup ((<>))
 import           Data.Text (Text)
 import qualified Data.Text as Text
 import qualified Data.Text.IO as Text
@@ -9,6 +12,10 @@ import           Data.Word (Word8)
 import           Language.Haskell.TH (listE, runIO, stringE, tupE)
 import           Language.Haskell.TH.Syntax (qAddDependentFile)
 import           Numeric.Natural (Natural)
+import           Options.Applicative (execParser, flag, fullDesc, helper, info,
+                                      long, metavar, progDesc, short,
+                                      strArgument, switch)
+import           Text.Read (readMaybe)
 
 wordlist :: [(Text, Text)]
 wordlist = $(do
@@ -20,8 +27,31 @@ wordlist = $(do
     listE $ tupE . map stringE . words <$> wordPairs
     )
 
+data Direction = Encode | Decode
+
+data Options = Options
+    { direction :: Direction
+    , numeric   :: Bool
+    , input     :: String
+    }
+
 main :: IO ()
-main = Text.putStrLn $ natToWords 257
+main = do
+    Options{..} <- execParser $
+        info (parser <**> helper) $ fullDesc <> progDesc theProgDesc
+    if numeric then
+        case readMaybe input of
+            Just n  -> Text.putStrLn $ natToWords n
+            Nothing -> fail "input is not a natural number"
+    else
+        fail "binary coding is not implemented yet"
+  where
+    parser = Options
+        <$> flag Encode Decode (short 'd' <> long "decode")
+        <*> switch (short 'n' <> long "numeric")
+        <*> strArgument (metavar "TEXT")
+    theProgDesc =
+        "A tool to encode/decode data and numbers using the PGP word list"
 
 natToWords :: Natural -> Text
 natToWords = Text.unwords . alternate . map byteToWord . natToBytes
