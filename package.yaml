@@ -1,0 +1,11 @@
+name: pgpwords
+version: 0.1
+license: GPL-3
+
+executable:
+  main: Main
+
+dependencies:
+  - base
+  - template-haskell
+  - text

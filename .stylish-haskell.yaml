@@ -1,0 +1,10 @@
+steps:
+  - simple_align:
+      cases: true
+      top_level_patterns: true
+      records: true
+  - imports:
+      pad_module_names: false
+  - language_pragmas:
+      align: false
+  - trailing_whitespace: {}
