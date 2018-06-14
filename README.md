@@ -14,3 +14,13 @@ tiger amusement
 $ pgpwords -nd "tiger amusement"
 2018
 ```
+
+```
+$ echo -n 験 | pgpwords
+treadmill paramount playhouse
+```
+
+```
+$ echo treadmill paramount playhouse | pgpwords -d
+験
+```

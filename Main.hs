@@ -6,7 +6,8 @@
 import           Control.Applicative (optional, (<**>))
 import           Control.Monad (unless)
 import           Data.ByteString.Lazy (ByteString)
-import qualified Data.ByteString.Lazy.Char8 as BSL
+import qualified Data.ByteString.Lazy as BSL
+import qualified Data.ByteString.Lazy.Char8 as BSLC
 import           Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 import           Data.Maybe (fromMaybe)
@@ -52,12 +53,14 @@ main = do
         Nothing    -> BSL.getContents
     if numeric then
         case direction of
-            Encode -> case readMaybe $ BSL.unpack input of
-                Just n  -> BSL.putStrLn $ natToWords n
+            Encode -> case readMaybe $ BSLC.unpack input of
+                Just n  -> BSLC.putStrLn $ natToWords n
                 Nothing -> fail "input is not a natural number"
             Decode -> print $ wordsToNat input
     else
-        fail "binary coding is not implemented yet"
+        case direction of
+            Encode -> BSLC.putStrLn $ bytesToWords input
+            Decode -> BSLC.putStrLn $ wordsToBytes input
   where
     parser = Options
         <$> flag Encode Decode (short 'd' <> long "decode")
@@ -67,12 +70,13 @@ main = do
         "A tool to encode/decode data and numbers using the PGP word list"
 
 natToWords :: Natural -> ByteString
-natToWords = BSL.unwords . alternate . map byteToWord . natToBytes
-  where
-    alternate = zipWith ($) $ cycle [fst, snd]
+natToWords = BSLC.unwords . alternate . map byteToWord . natToBytes
+
+alternate :: [(a, a)] -> [a]
+alternate = zipWith ($) $ cycle [fst, snd]
 
 wordsToNat :: ByteString -> Natural
-wordsToNat = bytesToNat . map wordToByte . BSL.words
+wordsToNat = bytesToNat . map wordToByte . BSLC.words
 
 byteToWord :: Word8 -> (ByteString, ByteString)
 byteToWord b = wordlist !! fromIntegral b
@@ -92,3 +96,9 @@ bytesToNat :: [Word8] -> Natural
 bytesToNat = \case
     []     -> 0
     b : bs -> fromIntegral b + 256 * bytesToNat bs
+
+wordsToBytes :: ByteString -> ByteString
+wordsToBytes = BSL.pack . map wordToByte . BSLC.words
+
+bytesToWords :: ByteString -> ByteString
+bytesToWords = BSLC.unwords . alternate . map byteToWord . BSL.unpack
