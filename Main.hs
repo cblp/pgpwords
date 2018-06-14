@@ -1,3 +1,4 @@
+{-# LANGUAGE ApplicativeDo #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
@@ -16,8 +17,8 @@ import           Data.Word (Word8)
 import           Language.Haskell.TH (listE, runIO, stringE, tupE)
 import           Language.Haskell.TH.Syntax (qAddDependentFile)
 import           Numeric.Natural (Natural)
-import           Options.Applicative (execParser, flag, fullDesc, helper, info,
-                                      long, metavar, progDesc, short,
+import           Options.Applicative (execParser, flag, fullDesc, help, helper,
+                                      info, long, metavar, progDesc, short,
                                       strArgument, switch)
 import           Text.Read (readMaybe)
 
@@ -58,14 +59,23 @@ main = do
                 Nothing -> fail "input is not a natural number"
             Decode -> print $ wordsToNat input
     else
-        case direction of
-            Encode -> BSLC.putStrLn $ bytesToWords input
-            Decode -> BSLC.putStrLn $ wordsToBytes input
+        BSLC.putStrLn $ case direction of
+            Encode -> bytesToWords input
+            Decode -> wordsToBytes input
   where
-    parser = Options
-        <$> flag Encode Decode (short 'd' <> long "decode")
-        <*> switch (short 'n' <> long "numeric")
-        <*> optional (strArgument $ metavar "TEXT")
+    parser = do
+        direction <- flag Encode Decode $
+            short 'd'
+            <> long "decode"
+            <> help "decode (default action is to encode)"
+        numeric <- switch $
+            short 'n'
+            <> long "numeric"
+            <> help "deal with numbers (data is binary by default)"
+        minput <- optional $
+            strArgument $
+            metavar "TEXT" <> help "input (if omitted, stdin is used)"
+        pure Options{..}
     theProgDesc =
         "A tool to encode/decode data and numbers using the PGP word list"
 
