@@ -8,6 +8,6 @@ executable:
 dependencies:
   - base
   - bytestring
+  - containers
   - optparse-applicative
   - template-haskell
-  - text
