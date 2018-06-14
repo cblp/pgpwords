@@ -2,8 +2,10 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-import           Control.Applicative ((<**>))
+import           Control.Applicative (optional, (<**>))
 import           Control.Monad (unless)
+import           Data.ByteString.Lazy (ByteString)
+import qualified Data.ByteString.Lazy.Char8 as BSL
 import           Data.Semigroup ((<>))
 import           Data.Text (Text)
 import qualified Data.Text as Text
@@ -32,15 +34,18 @@ data Direction = Encode | Decode
 data Options = Options
     { direction :: Direction
     , numeric   :: Bool
-    , input     :: String
+    , minput    :: Maybe ByteString
     }
 
 main :: IO ()
 main = do
     Options{..} <- execParser $
         info (parser <**> helper) $ fullDesc <> progDesc theProgDesc
+    input <- case minput of
+        Just input -> pure input
+        Nothing    -> BSL.getContents
     if numeric then
-        case readMaybe input of
+        case readMaybe $ BSL.unpack input of
             Just n  -> Text.putStrLn $ natToWords n
             Nothing -> fail "input is not a natural number"
     else
@@ -49,7 +54,7 @@ main = do
     parser = Options
         <$> flag Encode Decode (short 'd' <> long "decode")
         <*> switch (short 'n' <> long "numeric")
-        <*> strArgument (metavar "TEXT")
+        <*> optional (strArgument $ metavar "TEXT")
     theProgDesc =
         "A tool to encode/decode data and numbers using the PGP word list"
 
