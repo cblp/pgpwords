@@ -3,6 +3,14 @@
 A tool to encode/decode data and numbers using the
 [PGP word list](https://en.wikipedia.org/wiki/PGP_word_list)
 
+## Installation
+
+```
+$ git clone https://github.com/cblp/pgpwords.git
+$ cd pgpwords
+$ stack install
+```
+
 ## Examples
 
 ```
